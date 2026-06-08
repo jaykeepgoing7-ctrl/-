@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제32회 서귀포 칠십리 축제</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Black+Han+Sans&display=swap">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; scroll-behavior: smooth; }
+        .font-title { font-family: 'Black Han Sans', sans-serif; }
+        
+        /* 정교해진 캐릭터 인터랙션 가시성 확보 */
+        #interactive-character {
+            pointer-events: none;
+            position: fixed;
+            left: 0; top: 0;
+            width: 90px; height: 90px;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            will-change: transform;
+        }
+        .map-container { height: 450px; width: 100%; }
+        
+        /* 메인 페이지 다채로운 그라데이션 애니메이션 이펙트 */
+        .hero-mesh {
+            background-color: #1d4ed8;
+            background-image: 
+                radial-gradient(at 0% 0%, #2563eb 0px, transparent 50%),
+                radial-gradient(at 100% 0%, #06b6d4 0px, transparent 50%),
+                radial-gradient(at 50% 100%, #10b981 0px, transparent 50%);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased overflow-x-hidden">
+
+    <div id="interactive-character" class="hidden md:block opacity-0">
+        <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
+            <line x1="10" y1="45" x2="25" y2="45" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+            <line x1="5" y1="60" x2="20" y2="60" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity="0.6" />
+            
+            <circle cx="55" cy="24" r="11" fill="#fbcfe8" stroke="#0f172a" stroke-width="2.5"/>
+            <path d="M45,20 Q55,16 65,21" stroke="#1d4ed8" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+            <path d="M62,19 L66,23 L62,21 Z" fill="#1d4ed8" /> <circle cx="59" cy="24" r="2" fill="#0f172a"/> <path d="M58,29 Q56,31 54,30" stroke="#0f172a" stroke-width="1.5" fill="none"/> <path d="M42,38 Q55,36 68,44 Q72,46 68,52" stroke="#0f172a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M42,38 Q55,36 68,44 Q72,46 68,52" stroke="#fbcfe8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+            <path d="M40,36 L64,36 L58,62 L44,62 Z" fill="#2563eb" stroke="#0f172a" stroke-width="2.5" stroke-linejoin="round"/>
+            <path d="M40,36 Q52,42 64,36" fill="#1d4ed8"/> <rect x="45" y="42" width="14" height="14" rx="2" fill="#ffffff" stroke="#0f172a" stroke-width="2"/>
+            <text x="52" y="53" font-size="10" font-weight="900" fill="#0f172a" text-anchor="middle" font-family="sans-serif">32</text>
+
+            <path d="M42,38 Q28,34 20,46 Q16,50 22,54" stroke="#0f172a" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M42,38 Q28,34 20,46 Q16,50 22,54" stroke="#fbcfe8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+            <path d="M44,62 L58,62 L57,71 L43,71 Z" fill="#0f172a" stroke="#0f172a" stroke-width="2.5"/>
+            <path d="M50,62 L50,71" stroke="#ffffff" stroke-width="1"/> 
+
+            <path d="M45,71 L30,82 L42,91" stroke="#0f172a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M45,71 L30,82 L42,91" stroke="#fbcfe8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M39,90 L45,92 L43,95 L37,93 Z" fill="#ef4444" stroke="#0f172a" stroke-width="1.5"/>
+
+            <path d="M55,71 L68,82 L62,94" stroke="#0f172a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M55,71 L68,82 L62,94" stroke="#fbcfe8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M59,93 L65,95 L63,98 L57,96 Z" fill="#ef4444" stroke="#0f172a" stroke-width="1.5"/>
+            <circle cx="63" cy="95" r="1.5" fill="#facc15"/> 
+        </svg>
+    </div>
+
+    <div class="bg-emerald-600 text-white py-3.5 px-4 shadow-inner relative z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm gap-2">
+            <div class="flex items-center space-x-2 font-bold">
+                <span class="bg-emerald-800 px-2 py-0.5 rounded text-xs text-emerald-200 animate-pulse">Eco-Friendly</span>
+                <span>제32회 축제는 모바일 가이드북 대체 및 일회용 컵을 제한하는 환경 축제입니다.</span>
+            </div>
+            <div class="flex space-x-4 opacity-90 font-semibold">
+                <span>🚫 리플릿 폐지 (QR 대체)</span>
+                <span>🥤 개인 텀블러 지참 필수</span>
+            </div>
+        </div>
+    </div>
+
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-blue-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <a href="#" class="flex items-center space-x-2">
+                <span class="font-title text-3xl tracking-wider bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500 bg-clip-text text-transparent">제32회 서귀포 칠십리 축제</span>
+            </a>
+            <nav class="hidden md:flex space-x-8 font-bold text-slate-900">
+                <a href="#intro" class="hover:text-blue-600 transition-colors">행사 소개</a>
+                <a href="#schedule" class="hover:text-blue-600 transition-colors">행사 일정</a>
+                <a href="#register" class="hover:text-emerald-600 transition-colors">접수하기</a>
+                <a href="#map" class="hover:text-cyan-500 transition-colors">찾아오는 길</a>
+                <a href="#seogwipo" class="hover:text-blue-600 transition-colors">서귀포시 소개</a>
+            </nav>
+            <div class="md:hidden">
+                <button class="text-slate-700 p-2 font-bold" onclick="alert('상단 네비게이션 메뉴를 이용하여 각 섹션으로 이동하실 수 있습니다.')">Menu</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative hero-mesh py-28 px-4 text-center overflow-hidden">
+        <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+        
+        <div class="absolute top-10 left-10 w-32 h-32 border border-white/10 rounded-full hidden lg:block pointer-events-none"></div>
+        <div class="absolute bottom-10 right-10 w-48 h-48 border border-white/10 rounded-full hidden lg:block pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-5xl mx-auto text-white">
+            <div class="flex flex-wrap justify-center gap-2 mb-8">
+                <span class="bg-blue-900/50 backdrop-blur-md text-blue-200 font-bold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest border border-blue-400/30">
+                    🏃‍♂️ 힐링 스포츠 페스티벌
+                </span>
+                <span class="bg-amber-500/30 backdrop-blur-md text-amber-200 font-bold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest border border-amber-400/30">
+                    🏮 제주 고유 전통문화 상생
+                </span>
+                <span class="bg-emerald-500/30 backdrop-blur-md text-emerald-200 font-bold px-4 py-1.5 rounded-full text-xs uppercase tracking-widest border border-emerald-400/30">
+                    🌿 대한민국 최고 문화관광 축제
+                </span>
+            </div>
+            
+            <h1 class="font-title text-5xl md:text-8xl mb-6 drop-shadow-lg leading-tight tracking-tight">
+                제32회 서귀포 칠십리 축제
+            </h1>
+            
+            <p class="text-xl md:text-3xl font-bold mb-4 text-amber-300 drop-shadow-md">
+                "전통의 숨결 위에, 70리(27.4km) 바닷길을 달리는 활력을 더하다"
+            </p>
+            <p class="text-base md:text-xl font-medium mb-14 text-blue-50/90 max-w-3xl mx-auto leading-relaxed">
+                한라산의 수려한 생태와 태평양의 푸른 바다가 만나는 청정 도시 서귀포시!<br>
+                주민과 상생하는 전통 명물 체험부터 숨이 트이는 오션 코스 마라톤까지 동시에 만끽하세요.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-14 text-left">
+                <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:bg-white/15 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-amber-400 text-slate-950 text-xs font-black px-2.5 py-1 rounded-md shadow-sm">DAY 1</span>
+                            <span class="text-xs font-bold text-slate-100">10/23 (금)</span>
+                        </div>
+                        <span class="text-xl group-hover:scale-125 transition-transform">🏮</span>
+                    </div>
+                    <p class="font-black text-lg mb-2 text-white border-b border-white/10 pb-2">전통의 재발견 & 상생</p>
+                    <ul class="text-sm text-blue-50/90 space-y-1.5">
+                        <li class="flex items-start"><span class="text-amber-300 mr-1.5">•</span>읍면동 전통 문화/음식 체험 부스</li>
+                        <li class="flex items-start"><span class="text-amber-300 mr-1.5">•</span>소상공인 융복합 로컬 마켓 오픈</li>
+                        <li class="flex items-start"><span class="text-amber-300 mr-1.5">•</span>화려한 개회식 & 미디어아트 쇼</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white/15 backdrop-blur-xl p-6 rounded-2xl border-2 border-cyan-300/40 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:bg-white/20 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-cyan-300 text-slate-950 text-xs font-black px-2.5 py-1 rounded-md shadow-sm">DAY 2</span>
+                            <span class="text-xs font-bold text-slate-100">10/24 (토)</span>
+                        </div>
+                        <span class="text-xl group-hover:scale-125 transition-transform">🏃‍♂️</span>
+                    </div>
+                    <p class="font-black text-lg mb-2 text-cyan-200 border-b border-white/10 pb-2">70리 스포츠 페스티벌</p>
+                    <ul class="text-sm text-blue-50/90 space-y-1.5">
+                        <li class="flex items-start"><span class="text-cyan-300 mr-1.5">•</span>제1회 70리 오션 마라톤 대회</li>
+                        <li class="flex items-start"><span class="text-cyan-300 mr-1.5">•</span>10리 / 30리 / 70리 환상 코스</li>
+                        <li class="flex items-start"><span class="text-cyan-300 mr-1.5">•</span>완주자 대상 셔틀버스 상시 지원</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-xl transition-all duration-300 hover:-translate-y-2 hover:bg-white/15 group">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="bg-emerald-400 text-slate-950 text-xs font-black px-2.5 py-1 rounded-md shadow-sm">DAY 3</span>
+                            <span class="text-xs font-bold text-slate-100">10/25 (일)</span>
+                        </div>
+                        <span class="text-xl group-hover:scale-125 transition-transform">🎵</span>
+                    </div>
+                    <p class="font-black text-lg mb-2 text-white border-b border-white/10 pb-2">문화관광 페스티벌 피날레</p>
+                    <ul class="text-sm text-blue-50/90 space-y-1.5">
+                        <li class="flex items-start"><span class="text-emerald-300 mr-1.5">•</span>제주 해녀 노래 및 전통 무대</li>
+                        <li class="flex items-start"><span class="text-emerald-300 mr-1.5">•</span>초대형 칠십리 파워 콘서트</li>
+                        <li class="flex items-start"><span class="text-emerald-300 mr-1.5">•</span>탄소 제로 친환경 드론 라이트쇼</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center items-center gap-4">
+                <a href="#register" class="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-black px-8 py-4.5 rounded-xl shadow-2xl transition-all hover:-translate-y-1 text-center border border-white/20 tracking-wide text-lg">
+                    🏁 마라톤 참가 신청 (선착순 5,000명)
+                </a>
+                <a href="#schedule" class="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 font-black px-8 py-4.5 rounded-xl shadow-2xl transition-all hover:-translate-y-1 text-center tracking-wide text-lg">
+                    📋 전체 상세일정 보러가기
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="intro" class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="font-title text-4xl text-slate-900 mb-4">행사 소개</h2>
+            <div class="w-24 h-1.5 bg-blue-600 mx-auto rounded-full"></div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6 text-blue-600 font-bold text-xl">📆</div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">행사 기간 및 장소</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    <strong>기간:</strong> 2026. 10. 23.(금) ~ 10. 25.(일) [3일간]<br>
+                    <strong>장소:</strong> 서귀포시 자구리공원(메인 행사장) 및 <br> 서귀포시 전역(마라톤 코스)
+                </p>
+            </div>
+            <div class="bg-white p-8 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-6 text-emerald-600 font-bold text-xl">🎯</div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">핵심 운영 방향</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    • <strong>정체성 확립:</strong> '70리(27.4km)' 네이밍 브랜드화<br>
+                    • <strong>지역 상생:</strong> 읍면동 주민과 상생하는 부스 운영<br>
+                    • <strong>지속 가능성:</strong> 일회용품 사용 금지(친환경 축제)
+                </p>
+            </div>
+            <div class="bg-white p-8 rounded-2xl border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                <div class="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-6 text-cyan-600 font-bold text-xl">👥</div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">대상 및 규모</h3>
+                <p class="text-slate-600 leading-relaxed">
+                    <strong>참가 대상:</strong> 제주도민, 국내외 관광객 및 러너<br>
+                    <strong>운영 지역:</strong> 자구리공원 및 서귀포시 전역
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="schedule" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="font-title text-4xl text-slate-900 mb-4">전체 행사 일정</h2>
+                <div class="w-24 h-1.5 bg-blue-500 mx-auto rounded-full"></div>
+            </div>
+
+            <div class="space-y-12">
+                <div class="border-l-4 border-blue-600 pl-6 ml-2">
+                    <span class="text-blue-600 font-bold text-xl tracking-wider uppercase block mb-1">DAY 1 · 10월 23일(금)</span>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4">전통의 재발견 및 상생의 장</h3>
+                    <ul class="space-y-3 text-slate-600">
+                        <li>• <strong>읍·면·동 상생 부스 (10:00~21:00):</strong> 지역 명물 소개 존 / 문화 체험 존 / 지역 상품 마켓 존 운영</li>
+                        <li>• <strong>개회식 (18:00~19:30):</strong> 서귀포의 비전을 담은 개막 퍼포먼스 및 미디어 아트 공연</li>
+                    </ul>
+                </div>
+
+                <div class="border-l-4 border-cyan-500 pl-6 ml-2">
+                    <span class="text-cyan-600 font-bold text-xl tracking-wider uppercase block mb-1">DAY 2 · 10월 24일(토)</span>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-2">칠십리(70里) 스포츠 페스티벌 (마라톤)</h3>
+                    <p class="text-m text-slate-600 font-medium mb-4">"발로 뛰어 마주하는 서귀포의 매력! 바다와 한라산의 아름다운 조화 코스"</p>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                        <table class="w-full text-left border-collapse text-m">
+                            <thead class="bg-slate-50 font-bold text-slate-700 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4">코스명</th>
+                                    <th class="p-4">실제 거리</th>
+                                    <th class="p-4">출발 시간</th>
+                                    <th class="p-4">세부 경로</th>
+                                    <th class="p-4">코스별 특징</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-600">
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="p-4 font-bold text-slate-900">10리 코스</td>
+                                    <td class="p-4">3.9km</td>
+                                    <td class="p-4">09:00</td>
+                                    <td class="p-4">자구리공원(출발) → 소천지(도착)</td>
+                                    <td class="p-4 text-blue-600 font-semibold">[가족 화합] 어린이·노약자 추천 경관 도보</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="p-4 font-bold text-slate-900">30리 코스</td>
+                                    <td class="p-4">11.0km</td>
+                                    <td class="p-4">09:00</td>
+                                    <td class="p-4">월드컵경기장 → 법환초 → 강정포구 → 대포포구(도착)</td>
+                                    <td class="p-4 text-cyan-600 font-semibold">[서귀포 구경] 해안도로를 따라 달리는 관광형</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/50">
+                                    <td class="p-4 font-bold text-slate-900">70리 코스</td>
+                                    <td class="p-4">27.49km</td>
+                                    <td class="p-4">08:00</td>
+                                    <td class="p-4">월드컵경기장 → 법환초 → 강정포구 → 대포포구 → 컨벤션센터 → <br> 중문 → 월드컵경기장(도착)</td>
+                                    <td class="p-4 text-indigo-600 font-semibold">[시그니처] 메인/ 하프페이스 이상 전문코스</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-m text-blue-600 mt-2 font-medium">※ 편도형인 10리 및 30리 코스 참가자를 위해 도착지(소천지, 대포포구)에서 자구리공원(메인행사장) 행 귀가 셔틀버스를 수시 운행합니다.</p>
+                </div>
+
+                <div class="border-l-4 border-emerald-500 pl-6 ml-2">
+                    <span class="text-emerald-600 font-bold text-xl tracking-wider uppercase block mb-1">DAY 3 · 10월 25일(일)</span>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-4">칠십리 페스티벌 피날레 "서귀포의 울림"</h3>
+                    <div class="space-y-3 text-slate-600 text-m">
+                        <p>• <strong>1부 서귀포의 숨결 (14:00 ~ 16:30):</strong> 해녀노래, 성읍민속마을 마당놀이 등 <span class="text-blue-600 font-bold">서귀포시 전통 예술 무대 및 지역 예술인 스테이지</span></p>
+                        <p>• <strong>2부 칠십리 파워 콘서트 (17:00 ~ 19:30):</strong> <span class="text-blue-600 font-bold">K-pop 아티스트 초청</span>(아이돌, 트로트/국민발라더)</p>
+                        <p>• <strong>3부 화합의 폐막식 및 멀티미디어 쇼 (19:30 ~ 20:30):</strong> 아카이브 영상 상영 및 탄소 제로 <span class="text-blue-600 font-bold">'친환경 드론 라이트쇼 & 레이저 미디어 퍼포먼스'</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="register" class="py-24 bg-gradient-to-br from-blue-50 to-cyan-50/50">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="font-title text-4xl text-slate-900 mb-4">마라톤 사전 접수 신청</h2>
+                <p class="text-slate-600">제1회 서귀포 70리 마라톤 대회 참가 신청 시스템</p>
+            </div>
+            
+            <form id="marathonForm" class="bg-white p-8 rounded-3xl shadow-xl border border-blue-100 space-y-6">
+                <div>
+                    <label for="course" class="block text-sm font-bold text-slate-700 mb-2">마라톤 참여 코스 선택 *</label>
+                    <select id="course" name="course" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="10리 코스">10리 코스 (3.9km / 가족화합형 도보 및 가벼운 러닝)</option>
+                        <option value="30리 코스">30리 코스 (11.0km / 서귀포 해안도로 관광형 러닝)</option>
+                        <option value="70리 코스">70리 코스 (27.49km / 하프 이상 시그니처 코스)</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="name" class="block text-sm font-bold text-slate-700 mb-2">이름 *</label>
+                        <input type="text" id="name" name="name" required placeholder="홍길동" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-bold text-slate-700 mb-2">휴대폰 번호 *</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="010-0000-0000" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="address" class="block text-sm font-bold text-slate-700 mb-2">물품 수령 주소 * (기념품 및 배번표 사전 발송용)</label>
+                        <input type="text" id="address" name="address" required placeholder="우편번호를 포함한 정확한 도로명 주소를 입력해주세요. (예: 제주특별자치도 서귀포시 중앙로 105)" class="w-full border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 flex items-start space-x-3">
+                    <input type="checkbox" required id="eco-pledge" class="mt-1 accent-emerald-600">
+                    <label for="eco-pledge" class="text-xs text-emerald-800 leading-relaxed">
+                        <strong>[그린 가이드라인 준수 서약]</strong> 다회용 식기 보급 및 일회용 컵 전면 금지 정책에 동의하며, 칠십리 페스티벌 참가 기간 중 개인 텀블러 및 리사이클 활동에 자발적으로 참여할 것을 서약합니다. (필수)
+                    </label>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-colors flex justify-center items-center">
+                   <span id="btnText">70리 마라톤 참가 신청 완료</span>
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <section id="map" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="font-title text-4xl text-slate-900 mb-4">찾아오는 길</h2>
+                <p class="text-slate-600 mb-6">제주국제공항에서 행사장(자구리공원) 및 마라톤 출발지(월드컵경기장) 경로 안내</p>
+                <div class="flex justify-center space-x-6 mb-8 text-sm">
+                    <span class="inline-flex items-center font-semibold text-blue-600">
+                        <span class="w-3 h-3 bg-blue-600 rounded-full mr-2"></span> 경로 A: 자구리공원 (메인 행사장)
+                    </span>
+                    <span class="inline-flex items-center font-semibold text-cyan-500">
+                        <span class="w-3 h-3 bg-cyan-500 rounded-full mr-2"></span> 경로 B: 월드컵경기장 (마라톤 출발지)
+                    </span>
+                </div>
+            </div>
+
+            <div class="rounded-3xl overflow-hidden shadow-lg border border-slate-200">
+                <div id="leaflet-map" class="map-container"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 text-sm">
+                <div class="bg-slate-50 p-6 rounded-2xl">
+                    <h4 class="font-bold text-base text-slate-900 mb-2">📍 메인 축제장: 자구리공원</h4>
+                    <p class="text-slate-600 leading-relaxed">제주국제공항 → 평화로(지방도1135호선) 또는 번영로 진입 → 서귀포 동홍동/서귀동 방향 이동 → 자구리공원 일대 (주소: 제주특별자치도 서귀포시 서귀동 70-1)</p>
+                </div>
+                <div class="bg-slate-50 p-6 rounded-2xl">
+                    <h4 class="font-bold text-base text-slate-900 mb-2">📍 마라톤 출발점: 제주 월드컵경기장</h4>
+                    <p class="text-slate-600 leading-relaxed">제주국제공항 → 평화로 직행 리무진 버스(800번, 800-1번) 탑승 시 서귀포 버스터미널 및 월드컵경기장 전면 하차 가능 (주소: 제주특별자치도 서귀포시 법환동 914)</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="seogwipo" class="py-24 bg-gradient-to-t from-slate-900 via-slate-800 to-blue-950 text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-5 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:24px_24px]"></div>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="font-title text-4xl text-cyan-300 mb-6">청정 명품 도시, 서귀포시</h2>
+            <p class="text-lg text-slate-300 leading-relaxed max-w-3xl mx-auto mb-12">
+                서귀포시는 한라산의 수려한 생태와 태평양의 맑은 바다가 만나는 축복받은 고장입니다.<br>
+                고유의 문화유산과 지역 소상공인이 어우러진 역동적 로컬 경제를 갖추고 있으며, 이번 제32회 서귀포 칠십리 축제를 통해 전통문화와 힐링 스포츠를 융합한 대한민국 최고의 문화관광 도시로 도약합니다.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
+                    <span class="text-3xl block mb-2">🏆</span>
+                    <h4 class="font-bold text-lg text-cyan-300 mb-1">관광객 유치 시너지</h4>
+                    <p class="text-xs text-slate-300">5,000명의 스포츠 러너와 대형 칠십리 파워 콘서트 관객이 융합하여 서귀포시 전역의 체류형 관광 효과를 극대화합니다.</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
+                    <span class="text-3xl block mb-2">🌿</span>
+                    <h4 class="font-bold text-lg text-emerald-400 mb-1">친환경 청정 가치</h4>
+                    <p class="text-xs text-slate-300">다회용기 전면 도입 및 종이 없는 모바일 축제 가이드 적용으로 저탄소 에코 페스티벌의 모범을 보입니다.</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10">
+                    <span class="text-3xl block mb-2">💼</span>
+                    <h4 class="font-bold text-lg text-blue-400 mb-1">지역 소득 다이렉트 연계</h4>
+                    <p class="text-xs text-slate-300">읍·면·동의 고유 명물과 특산물을 집약한 융복합 로컬 부스를 가동하여 지역 상생의 실질적 소득 창출 기틀을 구축합니다.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-slate-500 py-12 px-4 text-center text-sm border-t border-slate-900">
+        <div class="max-w-7xl mx-auto space-y-4">
+            <p class="font-bold text-slate-400">개인정보처리방침</p>
+            <p>서귀포시 제1청사 : (63584) 제주특별자치도 서귀포시 중앙로 105(서홍동) | 제2청사 : (63565) 제주특별자치도 서귀포시 신중로 55(법환동)<br>
+제주안내 콜센터 (064) 120 (운영시간:07시~22시, 연중무휴)   생활민원 모바일신고 : #1110-2114
+</p>
+            <p class="text-xs opacity-60">&copy; 2026 Seogwipo Chilsimni Festival. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // 1. GSAP 캐릭터 인터랙션 가동 (더 부드럽게 마우스 트래킹 유도)
+        const character = document.getElementById('interactive-character');
+        
+        // 초기 로딩 시 마커 깜빡임 현상을 방지하기 위해 딜레이 후 노출 처리
+        gsap.to(character, { opacity: 1, duration: 0.5 });
+
+        window.addEventListener('mousemove', (e) => {
+            gsap.to(character, {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.4,
+                ease: "power1.out"
+            });
+        });
+
+        // 2. Leaflet.js 공항에서 자구리공원 / 월드컵경기장행 최적 루트 맵핑
+        const map = L.map('leaflet-map').setView([33.38, 126.55], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        const jejuAirport = [33.5116, 126.4925];     
+        const jaguriPark = [33.2439, 126.5684];      
+        const worldcupStadium = [33.2471, 126.5093]; 
+
+        L.circleMarker(jejuAirport, {color: '#1e293b', radius: 8, fillOpacity: 1}).addTo(map).bindPopup('✈️ 제주국제공항').openPopup();
+        L.circleMarker(jaguriPark, {color: '#2563eb', radius: 10, fillOpacity: 1}).addTo(map).bindPopup('📍 메인 행사장: 자구리공원');
+        L.circleMarker(worldcupStadium, {color: '#06b6d4', radius: 10, fillOpacity: 1}).addTo(map).bindPopup('🏃‍♂️ 마라톤 출발지: 월드컵경기장');
+
+        const routeToJaguri = [jejuAirport, [33.41, 126.59], jaguriPark];
+        L.polyline(routeToJaguri, {color: '#2563eb', weight: 4, strokeLinecap: 'round', dashArray: '5, 10'}).addTo(map);
+
+        const routeToStadium = [jejuAirport, [33.36, 126.42], worldcupStadium];
+        L.polyline(routeToStadium, {color: '#06b6d4', weight: 4, strokeLinecap: 'round', dashArray: '5, 10'}).addTo(map);
+
+        map.fitBounds([jejuAirport, jaguriPark, worldcupStadium], { padding: [50, 50] });
+
+        // 3. 🛠️ Google Sheets Apps Script API 통신 스크립트 연동
+        /*
+          [사용 방법 안내]
+          1. 구글 스프레드시트를 생성하고 첫 행에 [timestamp, course, name, phone, address] 열을 구성합니다.
+          2. [확장 프로그램] -> [Apps Script]로 진입하여 아래 코드를 붙여넣고 배포합니다.
+             
+             function doPost(e) {
+               var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+               var p = e.parameter;
+               sheet.appendRow([new Date(), p.course, p.name, p.phone, p.address]);
+               return ContentService.createTextOutput(JSON.stringify({"result":"success"})).setMimeType(ContentService.MimeType.JSON);
+             }
+             
+          3. 배포 후 발급받은 '웹 앱 URL'을 아래 APP_SCRIPT_URL 변수에 입력하시면 연동이 완료됩니다.
+        */
+        const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwaVdCVF_qyvFXo71UThqenqoBUiQvRdaURuVAbzBoYPUwLiXPYd2C2unWnM8EpYCg/exec"; 
+
+        document.getElementById('marathonForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // 기본 서브밋 동작 일시 정지
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            
+            // 전송 중 UI 상태 전환 효과
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            submitBtn.classList.add('bg-slate-400');
+            btnText.innerText = "접수 데이터 전송 중... 🚀";
+
+            // 폼 필드 데이터 추출 
+            const course = document.getElementById('course').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const address = document.getElementById('address').value;
+
+            // URL 인코딩 파라미터 변환
+            const formData = new URLSearchParams();
+            formData.append('course', course);
+            formData.append('name', name);
+            formData.append('phone', phone);
+            formData.append('address', address);
+
+            // 구글 앱스 스크립트 주소가 설정되지 않은 테스트 환경 예외 처리
+            if(APP_SCRIPT_URL.includes("YOUR_GOOGLE_APPS_SCRIPT")) {
+                setTimeout(() => {
+                    alert(`[테스트 환경 안내]\n구글 Apps Script URL이 설정되지 않았으나 폼 배치는 정상 작동합니다.\n\n신청 코스: ${course}\n신청자: ${name}\n연락처: ${phone}\n배송지: ${address}`);
+                    resetForm(submitBtn, btnText);
+                }, 1000);
+                return;
+            }
+
+            // 실제 통신 파트 (CORS를 피해가기 위해 no-cors 모드가 기본 유도될 수 있는 구글 스크립트 특성 반영)
+            fetch(APP_SCRIPT_URL, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => {
+                alert('🎉 축하합니다! 제1회 서귀포 70리 마라톤 참가 신청이 성공적으로 완료되었습니다.\n물품 발송 전 안내 문자가 전송될 예정입니다.');
+                resetForm(submitBtn, btnText);
+                document.getElementById('marathonForm').reset();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('데이터 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주시거나 관리자(064-760-0000)로 문의바랍니다.');
+                resetForm(submitBtn, btnText);
+            });
+        });
+
+        function resetForm(btn, text) {
+            btn.disabled = false;
+            btn.classList.remove('bg-slate-400');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            text.innerText = "70리 마라톤 참가 신청 완료";
+        }
+    </script>
+</body>
+</html>
